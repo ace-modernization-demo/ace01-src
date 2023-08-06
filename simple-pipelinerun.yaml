@@ -10,7 +10,7 @@ kind: PipelineRun
 metadata:
   generateName: ace-pipeline-
 spec:
-  serviceAccountName: pipeline-deployer-serviceaccount
+  serviceAccountName: ace-pipeline-deployer-serviceaccount
   params:
     # ########################################################
     # where to run the App Connect application
@@ -27,27 +27,27 @@ spec:
     # ########################################################
     # location of the git repository with your application
     - name: git-repository
-      value: "https://github.com/dalelane/app-connect-tekton-pipeline"
+      value: "https://github.com/aceorg-khongks/ace-src"
 
     # name of the App Connect project to deploy
     #  This should be the name of a folder in ace-projects
     - name: ace-project-name
-      value: "simple-demo"
+      value: "Books"
 
     # name of an App Connect test project
     #  This is used to verify the bar before the new
     #  Integration Server is deployed
     #  This should be the name of a folder in ace-projects
     - name: test-project-name
-      value: "simple-demo_Test"
+      value: ""
 
 
   pipelineRef:
-    name: pipeline-ace-integration-server
+    name: ace-pipeline
 
 
   workspaces:
-    - name: pipeline-shared-workspace
+    - name: shared-workspace
       volumeClaimTemplate:
         spec:
           storageClassName: ibmc-block-gold
