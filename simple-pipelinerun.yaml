@@ -9,6 +9,7 @@ apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   generateName: ace-pipeline-
+  namespace: ace01-ci
 spec:
   serviceAccountName: ace-pipeline-deployer-serviceaccount
   params:
@@ -17,22 +18,32 @@ spec:
     # ########################################################
     # what to call the IntegrationServer that runs your application
     - name: integration-server-name
-      value: "hello-world"
+      value: books-is
     # where to run your application
     - name: ace-namespace
-      value: "ace-demo"
+      value: ace01-dev
+
+    - name: integration-server-replicas
+      value: "2"
 
     # ########################################################
     # where to find the projects to create
     # ########################################################
     # location of the git repository with your application
     - name: git-repository
-      value: "https://github.com/aceorg-khongks/ace-src"
+      value: https://github.com/aceorg-khongks/ace01-src
+
+    - name: gitops-repository
+      value: https://github.com/aceorg-khongks/ace01-ops
 
     # name of the App Connect project to deploy
     #  This should be the name of a folder in ace-projects
     - name: ace-project-name
-      value: "Books"
+      value: BooksOpenAPI3
+
+    #  This should be the name of a Java folder in ace-projects
+    - name: java-project-name
+      value: BooksOpenAPI3Java
 
     # name of an App Connect test project
     #  This is used to verify the bar before the new
@@ -41,19 +52,46 @@ spec:
     - name: test-project-name
       value: ""
 
+    # - name: target-build-image
+    #   value: image-registry.openshift-image-registry.svc.cluster.local:5000/ace01-dev/ace01:1.0.0
+
+    - name: git-user-name
+      value: "khongks"
+    - name: git-user-email
+      value: "khongks@gmail.com"
+    - name: git-script
+      value: |
+        # Push changes to GitHub
+
+        cd $(workspaces.output.path)/gitops
+        ls -l
+        ls environments/dev/ace01 
+        git config --global --add safe.directory /workspace/output/gitops
+        git checkout -b main
+        git add .
+        git commit -am "Updated by build pipeline"
+        git push -u origin main
 
   pipelineRef:
     name: ace-pipeline
 
-
+  # workspaces:
+  #   - name: shared-workspace
+  #     persistentVolumeClaim:
+  #       claimName: workspace-pvc
   workspaces:
     - name: shared-workspace
       volumeClaimTemplate:
         spec:
-          storageClassName: ibmc-block-gold
+          storageClassName: managed-nfs-storage
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
               storage: 100Mi
-
+    - name: dockerconfig-workspace
+      secret:
+        secretName: dockerconfig-secret
+    - name: basic-auth-workspace
+      secret:
+        secretName: ace01-git-credentials
